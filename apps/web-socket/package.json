@@ -1,0 +1,21 @@
+{
+  "name": "web-socket",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "build": "tsc -b",
+    "run": "build && node ./src/index.js",
+    "dev": "tsc -w && node ./src/index.js"
+  },
+  "dependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "ws": "^8.18.2"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1"
+  }
+}
