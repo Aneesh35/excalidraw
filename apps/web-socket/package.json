@@ -8,6 +8,7 @@
   "license": "ISC",
   "scripts": {
     "build": "tsc -b",
+    "install": "pnpm install",
     "run": "build && node ./src/index.js",
     "dev": "tsc -w && node ./src/index.js"
   },

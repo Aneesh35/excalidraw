@@ -11,7 +11,7 @@ const Home = () => {
             </button>
             <button className='border-1 p-2 rounded-md'>
                 <Link href={"/signup"}>
-                SignIn
+                SignUp
                 </Link>
             </button>
         </div>

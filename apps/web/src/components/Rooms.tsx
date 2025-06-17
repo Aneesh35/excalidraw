@@ -1,0 +1,56 @@
+"use client"
+import axios from 'axios'
+import React from 'react'
+import { useState, useEffect } from 'react'
+import { Close } from './icons/close'
+
+export const Rooms = () => {
+    const [rooms, setRooms] = useState([]);
+    const [toggle, setToggle] = useState(false);
+    const fetchRooms = async () => {
+        try {
+            const result = await axios.get("/api/user");
+            setRooms(result.data.rooms)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    useEffect(() => {
+        fetchRooms()
+    }, [])
+
+    return (
+        <div>
+            <button
+                className="w-auto rounded-lg p-3 flex items-center justify-between text-center text-white bg-blue-600"
+                onClick={() => setToggle(!toggle)}
+            >
+                <span>My-rooms</span>
+            </button>
+            {toggle && (
+                <div className="fixed inset-0 flex justify-center items-center z-50">
+                    <div className="absolute inset-0 bg-black opacity-70" onClick={() => setToggle(!toggle)}></div>
+                    <div className="relative w-56 min-h-48 rounded-lg p-4 bg-blue-600 z-10">
+                        <div className='w-full'>
+                            <button onClick={() => setToggle(!toggle)}><Close /></button>
+                        </div>
+                        <div className='flex flex-col gap-y-1.5'>
+
+                            {
+
+                                rooms && rooms.map((r) => (
+                                    <div className='w-full border-1 rounded-md p-2 text-white cursor-pointer '>
+                                        <button className='w-full text-start cursor-pointer'>
+                                            {r.slug}
+                                        </button>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}

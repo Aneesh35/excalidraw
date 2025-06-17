@@ -7,7 +7,9 @@
     "./userschema":"./src/userSchema.ts"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "pnpm install",
+    "build":"tsc -b"
   },
   "dependencies": {
     "@repo/typescript-config": "workspace:*",

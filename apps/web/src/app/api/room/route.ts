@@ -7,31 +7,111 @@ import dbClient from "@repo/database/dbclient";
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const generateRoomID = (): string => {
-            return uuidv4().replace(/-/g, "").substring(0, 6).toUpperCase();
-        };
         const result = CreateRoomSchema.safeParse(body)
-        const token = await getToken({ req, secret: process.env.AUTH_SECRET })
         if (!result.success) {
-            return NextResponse.json({ error: "Invalid data" }, { status: 301 });
+            return NextResponse.json({ error: "Invalid data" }, { status: 400 });
         }
+
+        const token = await getToken({ req, secret: process.env.AUTH_SECRET })
         if (!token || !token.id) {
-            return NextResponse.json({ error: "unauthenticated" }, { status: 301 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+
         const userId = token.id as string
         const room = await dbClient.room.create({
             data: {
                 id: generateRoomID(),
                 slug: result.data.name,
                 adminId: userId,
+                shareToken: generateShareToken(),
                 users: {
                     connect: [{ id: userId }]
                 }
             }
         })
-        return NextResponse.json({ message: "room created successfully", roomId: room.id }, { status: 201 })
+        return NextResponse.json({
+            message: "Room created successfully",
+            roomId: room.id,
+            shareToken: room.shareToken
+        }, { status: 201 })
     } catch (err) {
-        console.log(err)
-        return NextResponse.json({ error: "Invalid Room Name!!" }, { status: 301 })
+        console.error("Error creating room:", err)
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
+}
+
+export async function PUT(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const roomId = body.id;
+        const token = await getToken({ req, secret: process.env.AUTH_SECRET })
+        if (!token || !token.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        const userId = token.id as string;
+        const room = await dbClient.room.findUnique({
+            where: { shareToken: roomId },
+            include: { users: true }
+        });
+
+        if (!room) {
+            return NextResponse.json({ error: "Room not found" }, { status: 404 });
+        }
+        const isUserInRoom = room.users.some(user => user.id === userId);
+        if (isUserInRoom) {
+            return NextResponse.json({ message: "User already in room" }, { status: 200 });
+        }
+
+        const updatedRoom = await dbClient.room.update({
+            where: { shareToken: roomId },
+            data: { users: { connect: { id: userId } } }
+        });
+
+        return NextResponse.json({ message: "User added successfully" }, { status: 200 })
+    } catch (error) {
+        console.error("Error joining room:", error)
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    }
+}
+
+export async function GET(req: NextRequest) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const Roomid=searchParams.get("id[]")
+        const token = await getToken({ req, secret: process.env.AUTH_SECRET })
+        if (!token || !token.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        if (!Roomid) {
+            return NextResponse.json({ error: "Invalid Request" }, { status: 400 });
+        }
+        const userId = token.id as string;
+        const room = await dbClient.room.findUnique({
+            where: {
+                shareToken: Roomid
+            }
+            , include: {
+                users: true
+            }
+        })
+        const users = room?.users;
+        if (!users) {
+            return NextResponse.json({ error: "unable to fetch users" }, { status: 404 });
+        }
+        const roomUsers = users
+            .filter((u) => u.id !== userId)
+            .map((u) => ({ id: u.id }));
+        return NextResponse.json({ users: roomUsers }, { status: 200 })
+    } catch (error) {
+        console.log(error)
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    }
+}
+
+function generateRoomID(): string {
+    return uuidv4().replace(/-/g, "").substring(0, 6).toUpperCase();
+}
+
+function generateShareToken(): string {
+    return uuidv4().replace(/-/g, "");
 }

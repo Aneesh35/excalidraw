@@ -16,13 +16,14 @@ export const isAuthenticated = (token: string) => {
 }
 
 export interface User {
-    ws: WebSocket,
-    rooms: string[],
-    userId: string
+    userId: string;
+    ws: WebSocket;
+    rooms: Set<string>;
 }
+
 export interface Data {
     type: string,
     roomId: string,
     id?: string,
-    message?:string,
+    message?: string,
 }

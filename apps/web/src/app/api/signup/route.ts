@@ -1,10 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import dbClient from '@repo/database/dbclient';
 import { encryptPassword } from '@/lib/server/util';
 import { signInSchema } from '@repo/schemas/userschema';
-import { error } from 'console';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         const { email, password } = await signInSchema.parseAsync(body);
@@ -27,3 +26,4 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
 }
+
