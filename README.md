@@ -7,5 +7,6 @@
 
 ## challenges Faced
 
-- Faced issues decrypting the token in web socket server which was recieved from auth.js library but built a custom decoder function helped solve the issue.
+- Faced issues decrypting the token in web socket server which was recieved from auth.js library
+  - Solution: Built a custom decoder function helped solve the issue.
   
