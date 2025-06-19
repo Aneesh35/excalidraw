@@ -42,6 +42,7 @@ const HomePage = () => {
                 socket.onopen = () => {
                     console.log('WebSocket connected');
                     socket.send(JSON.stringify({ type: 'join-Room', roomId: id }));
+                    console.log("Request sent")
                 };
 
                 socket.onmessage = (event) => {
