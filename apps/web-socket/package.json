@@ -5,14 +5,18 @@
   "main": "index.js",
   "keywords": [],
   "author": "",
+  "type": "module",
   "license": "ISC",
   "scripts": {
     "build": "tsc -b",
     "run": "build && node ./dist/index.js"
   },
   "dependencies": {
+    "@panva/hkdf": "^1.2.1",
     "@repo/typescript-config": "workspace:*",
+    "axios": "^1.10.0",
     "dotenv": "^16.5.0",
+    "jose": "6.0.11",
     "jsonwebtoken": "^9.0.2",
     "ws": "^8.18.2"
   },

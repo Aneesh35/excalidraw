@@ -1,14 +1,14 @@
 import { WebSocketServer } from "ws";
 import { config } from "dotenv";
-import jwt from "jsonwebtoken";
-import { Data, User } from "./libs/util";
+import { Data, DecodeJWT, User } from "./libs/util.js"
+import axios from "axios";
 
 config();
 
 const wss = new WebSocketServer({ port: 8080 });
 const users: User[] = [];
 
-wss.on("connection", (socket, request) => {
+wss.on("connection", async (socket, request) => {
     console.log("Someone is trying to connect...");
 
     const url = request.url;
@@ -29,7 +29,7 @@ wss.on("connection", (socket, request) => {
     let decoded: any;
 
     try {
-        decoded = jwt.verify(token, process.env.AUTH_SECRET as string);
+        decoded = await DecodeJWT({ token: token, secret: process.env.AUTH_SECRET as string, salt: process.env.AUTH_SALT as string })
     } catch (err) {
         console.log("Invalid token");
         socket.close();
@@ -54,11 +54,25 @@ wss.on("connection", (socket, request) => {
 
     users.push(currentUser);
 
-    socket.on("message", (message) => {
+    socket.on("message", async (message) => {
+        console.log("authenticated user sent some message")
         try {
             const parsed: Data = JSON.parse(message.toString());
             switch (parsed.type) {
                 case "join-Room":
+                    console.log("user trying to join room")
+                    try {
+                        const result = await axios.put(`${process.env.NEXT_URI}/api/room`, {
+                            id: parsed.roomId
+                        }, {
+                            headers: {
+                                Cookie: `${process.env.AUTH_SALT}=${token}`,
+                            }
+                        })
+                        console.log(result.data)
+                    } catch (err) {
+                        console.log(err)
+                    }
                     currentUser.rooms.add(parsed.roomId);
                     console.log(`${userId} joined room ${parsed.roomId}`);
                     break;
