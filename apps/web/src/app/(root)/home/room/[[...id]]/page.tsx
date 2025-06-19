@@ -1,16 +1,24 @@
 "use client";
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
+interface RoomResponse {
+    message: string;
+    // Extend this interface based on actual API response shape
+}
+
 const HomePage = () => {
     const params = useParams();
-    const id = Array.isArray(params?.id) ? params.id[0] : undefined;
+    const router = useRouter();
+    const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
     const [loading, setLoading] = useState(true);
+    const [token, setToken] = useState("");
+    const [socket, setSocket] = useState<WebSocket>();
     const [error, setError] = useState<string | null>(null);
-    const [roomData, setRoomData] = useState<any>(null);
+    const [roomData, setRoomData] = useState<RoomResponse | null>(null);
 
     useEffect(() => {
         const joinRoom = async () => {
@@ -18,12 +26,39 @@ const HomePage = () => {
                 setLoading(false);
                 return;
             }
-
-            setLoading(true);
             try {
-                const response = await axios.put('/api/room', { id });
-                setRoomData(response.data);
+                setLoading(true);
+                const [roomRes, tokenRes] = await Promise.all([
+                    axios.put('/api/room', { id }),
+                    axios.get('/api/getoken')
+                ]);
+
+                setRoomData(roomRes.data);
+                setToken(tokenRes.data.token);
                 setError(null);
+
+                const socket = new WebSocket(`ws://localhost:8080/ws?token=${tokenRes.data.token}`);
+                setSocket(socket);
+                socket.onopen = () => {
+                    console.log('WebSocket connected');
+                    socket.send(JSON.stringify({ type: 'join-Room', roomId: id }));
+                };
+
+                socket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    console.log('WebSocket message:', data);
+                };
+
+                socket.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+
+                socket.onclose = () => {
+                    console.log('WebSocket disconnected');
+                };
+                return () => {
+                    socket.close();
+                };
             } catch (err: any) {
                 console.error('Error joining room:', err);
                 setError(err.response?.data?.error || 'Failed to join room');
@@ -47,9 +82,9 @@ const HomePage = () => {
         return (
             <div className="text-white">
                 <p>Error: {error}</p>
-                <button 
+                <button
                     className="mt-2 px-4 py-2 bg-blue-500 rounded hover:bg-blue-600"
-                    onClick={() => window.location.href = '/home'}
+                    onClick={() => router.push('/home')}
                 >
                     Go to Home
                 </button>
