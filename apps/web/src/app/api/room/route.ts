@@ -77,7 +77,7 @@ export async function PUT(req: NextRequest) {
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
-        const Roomid=searchParams.get("id[]")
+        const Roomid = searchParams.get("id[]")
         const token = await getToken({ req, secret: process.env.AUTH_SECRET })
         if (!token || !token.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

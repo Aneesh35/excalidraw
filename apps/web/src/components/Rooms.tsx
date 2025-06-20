@@ -3,9 +3,11 @@ import axios from 'axios'
 import React from 'react'
 import { useState, useEffect } from 'react'
 import { Close } from './icons/close'
+import { useRouter } from 'next/navigation'
 
 export const Rooms = () => {
-    const [rooms, setRooms] = useState([]);
+    const router = useRouter();
+    const [rooms, setRooms] = useState<rooms[]>([]);
     const [toggle, setToggle] = useState(false);
     const fetchRooms = async () => {
         try {
@@ -15,11 +17,19 @@ export const Rooms = () => {
             console.log(error)
         }
     }
-
+    interface rooms {
+        id: string;
+        shareToken: string;
+        slug: string;
+        createdAt: Date;
+        adminId: string;
+    }
     useEffect(() => {
         fetchRooms()
     }, [])
-
+    const handleRouting = (RoomId: string) => {
+        router.push(`/home/room/${RoomId}`)
+    }
     return (
         <div>
             <button
@@ -36,12 +46,10 @@ export const Rooms = () => {
                             <button onClick={() => setToggle(!toggle)}><Close /></button>
                         </div>
                         <div className='flex flex-col gap-y-1.5'>
-
                             {
-
                                 rooms && rooms.map((r) => (
                                     <div className='w-full border-1 rounded-md p-2 text-white cursor-pointer '>
-                                        <button className='w-full text-start cursor-pointer'>
+                                        <button className='w-full text-start cursor-pointer' onClick={() => handleRouting(r.shareToken)}>
                                             {r.slug}
                                         </button>
                                     </div>

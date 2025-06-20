@@ -1,13 +1,18 @@
 import { jwtDecrypt, calculateJwkThumbprint, base64url } from "jose";
 import { hkdf } from "@panva/hkdf";
 import WebSocket from "ws";
+
+export interface CustomSocket extends WebSocket {
+    token: string;
+    userId: string;
+}
 export interface User {
     userId: string;
-    ws: WebSocket;
+    ws: CustomSocket;
     rooms: Set<string>;
 }
 
-export interface Data {
+export interface ParseData {
     type: string,
     roomId: string,
     id?: string,

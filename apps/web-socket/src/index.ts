@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import { config } from "dotenv";
-import { Data, DecodeJWT, User } from "./libs/util.js"
+import { ParseData, DecodeJWT, User, CustomSocket } from "./libs/util.js"
 import axios from "axios";
 
 config();
@@ -8,7 +8,8 @@ config();
 const wss = new WebSocketServer({ port: 8080 });
 const users: User[] = [];
 
-wss.on("connection", async (socket, request) => {
+
+wss.on("connection", async (socket: CustomSocket, request) => {
     console.log("Someone is trying to connect...");
 
     const url = request.url;
@@ -51,30 +52,29 @@ wss.on("connection", async (socket, request) => {
         rooms: new Set(),
         ws: socket
     };
-
+    socket.token = token;
+    socket.userId = userId;
     users.push(currentUser);
 
     socket.on("message", async (message) => {
-        console.log("authenticated user sent some message")
         try {
-            const parsed: Data = JSON.parse(message.toString());
+            const parsed: ParseData = JSON.parse(message.toString());
             switch (parsed.type) {
                 case "join-Room":
                     console.log("user trying to join room")
                     try {
-                        const result = await axios.put(`${process.env.NEXT_URI}/api/room`, {
+                        await axios.put(`${process.env.NEXT_URI}/api/room`, {
                             id: parsed.roomId
                         }, {
                             headers: {
-                                Cookie: `${process.env.AUTH_SALT}=${token}`,
+                                Cookie: `${process.env.AUTH_SALT}=${socket.token}`,
                             }
                         })
-                        console.log(result.data)
+                        currentUser.rooms.add(parsed.roomId);
+                        console.log(`${socket.userId} joined room ${parsed.roomId}`);
                     } catch (err) {
                         console.log(err)
                     }
-                    currentUser.rooms.add(parsed.roomId);
-                    console.log(`${userId} joined room ${parsed.roomId}`);
                     break;
                 default:
                     console.log("Unknown message type:", parsed.type);
@@ -85,8 +85,8 @@ wss.on("connection", async (socket, request) => {
     });
 
     socket.on("close", () => {
-        console.log("User disconnected:", userId);
-        const index = users.findIndex(u => u.userId === userId && u.ws === socket);
+        console.log("User disconnected:", socket.userId);
+        const index = users.findIndex(u => u.userId === socket.userId);
         if (index !== -1) users.splice(index, 1);
     });
 });

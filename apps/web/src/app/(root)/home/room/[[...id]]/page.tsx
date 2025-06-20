@@ -4,11 +4,6 @@ import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-interface RoomResponse {
-    message: string;
-    // Extend this interface based on actual API response shape
-}
-
 const HomePage = () => {
     const params = useParams();
     const router = useRouter();
@@ -18,7 +13,6 @@ const HomePage = () => {
     const [token, setToken] = useState("");
     const [socket, setSocket] = useState<WebSocket>();
     const [error, setError] = useState<string | null>(null);
-    const [roomData, setRoomData] = useState<RoomResponse | null>(null);
 
     useEffect(() => {
         const joinRoom = async () => {
@@ -28,19 +22,12 @@ const HomePage = () => {
             }
             try {
                 setLoading(true);
-                const [roomRes, tokenRes] = await Promise.all([
-                    axios.put('/api/room', { id }),
-                    axios.get('/api/getoken')
-                ]);
-
-                setRoomData(roomRes.data);
+                const tokenRes = await axios.get('/api/getoken')
                 setToken(tokenRes.data.token);
                 setError(null);
-
                 const socket = new WebSocket(`ws://localhost:8080/ws?token=${tokenRes.data.token}`);
                 setSocket(socket);
                 socket.onopen = () => {
-                    console.log('WebSocket connected');
                     socket.send(JSON.stringify({ type: 'join-Room', roomId: id }));
                     console.log("Request sent")
                 };
@@ -98,11 +85,6 @@ const HomePage = () => {
             {id ? (
                 <div>
                     <h1 className="text-xl font-bold mb-4">Room: {id}</h1>
-                    {roomData && (
-                        <p className="text-green-400">
-                            {roomData.message}
-                        </p>
-                    )}
                 </div>
             ) : (
                 <div>
