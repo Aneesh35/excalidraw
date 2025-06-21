@@ -4,17 +4,22 @@ import React from 'react'
 import { useState, useEffect } from 'react'
 import { Close } from './icons/close'
 import { useRouter } from 'next/navigation'
+import { Skeleton } from "@/components/ui/skeleton"
 
 export const Rooms = () => {
     const router = useRouter();
     const [rooms, setRooms] = useState<rooms[]>([]);
+    const [Loader, setLoading] = useState(false);
     const [toggle, setToggle] = useState(false);
     const fetchRooms = async () => {
         try {
+            setLoading(true);
             const result = await axios.get("/api/user");
             setRooms(result.data.rooms)
+            setLoading(false);
         } catch (error) {
             console.log(error)
+            setLoading(false);
         }
     }
     interface rooms {
@@ -47,13 +52,25 @@ export const Rooms = () => {
                         </div>
                         <div className='flex flex-col gap-y-1.5'>
                             {
-                                rooms && rooms.map((r) => (
-                                    <div className='w-full border-1 rounded-md p-2 text-white cursor-pointer '>
-                                        <button className='w-full text-start cursor-pointer' onClick={() => handleRouting(r.shareToken)}>
-                                            {r.slug}
-                                        </button>
-                                    </div>
-                                ))
+                                Loader ? (<>
+                                    <Skeleton className="h-10 w-full rounded-xl opacity-95" />
+                                    <Skeleton className="h-10 w-full rounded-xl opacity-75" />
+                                    <Skeleton className="h-10 w-full rounded-xl opacity-75" />
+                                </>)
+                                    : (<>{
+                                        rooms.length > 0 ? rooms.map((r) => (
+                                            <div className='w-full border-1 rounded-md p-2 text-white cursor-pointer ' key={r.id}>
+                                                <button className='w-full text-start cursor-pointer' onClick={() => handleRouting(r.shareToken)}>
+                                                    {r.slug}
+                                                </button>
+                                            </div>
+                                        ))
+                                            : (
+                                                <div className='text-white flex w-full justify-center text-lg font-bold pt-5'>You have no Rooms</div>
+                                            )
+                                    }
+                                    </>
+                                    )
                             }
                         </div>
                     </div>
